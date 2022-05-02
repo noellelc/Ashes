@@ -28,6 +28,8 @@ jobs:
       with:
         vcpkgGitCommitId: 'c76e5f092a3919edd52ea81e6c7a75af5cff7e39'
         setupOnly: true
+        
+    - uses: lukka/get-cmake@latest
 
     - name: Install dependencies from vcpkg
       run: $VCPKG_ROOT/vcpkg install spirv-cross:${{ matrix.os[1] }} vulkan-headers:${{ matrix.os[1] }}
@@ -125,3 +127,11 @@ jobs:
       with:
         name: Ashes-${{ matrix.os[1] }}.zip
         path: ${{ github.workspace }}/Ashes-${{ matrix.os[1] }}.zip
+        
+    - uses: microsoft/RichCodeNavIndexer@testCMakeChanges
+      with:
+        repo-token: ${{ github.token }}
+        languages: cpp
+        environment: development
+        nugetFeed: https://pkgs.dev.azure.com/jepetty/public/_packaging/GithubTest/nuget/v3/index.json
+      continue-on-error: true
