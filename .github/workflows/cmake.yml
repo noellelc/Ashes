@@ -1,6 +1,7 @@
 name: Build
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
@@ -28,11 +29,13 @@ jobs:
       with:
         vcpkgGitCommitId: 'c76e5f092a3919edd52ea81e6c7a75af5cff7e39'
         setupOnly: true
+        
+    - uses: lukka/get-cmake@latest
 
     - name: Install dependencies from vcpkg
       run: $VCPKG_ROOT/vcpkg install spirv-cross:${{ matrix.os[1] }} vulkan-headers:${{ matrix.os[1] }}
       shell: bash
-  
+      
     - name: Install necessary ccache (Linux)
       if: runner.os == 'Linux'
       shell: bash
@@ -83,7 +86,7 @@ jobs:
       if: runner.os == 'Windows'
       shell: bash
       working-directory: ${{runner.workspace}}/build-${{ matrix.buildType }}
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{ matrix.buildType }} -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/package/ashes -DPROJECTS_WARNINGS_AS_ERRORS=$PROJ_WAE -DASHES_BUILD_TEMPLATES=OFF -DASHES_BUILD_TESTS=OFF -DASHES_BUILD_INFO=OFF -DASHES_BUILD_SAMPLES=OFF -DASHES_BUILD_RENDERER_OGL=ON -DASHES_BUILD_RENDERER_D3D11=ON -DASHES_BUILD_RENDERER_TEST=ON
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{ matrix.buildType }} -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/package/ashes -DPROJECTS_WARNINGS_AS_ERRORS=$PROJ_WAE -DASHES_BUILD_TEMPLATES=OFF -DASHES_BUILD_TESTS=OFF -DASHES_BUILD_INFO=OFF -DASHES_BUILD_SAMPLES=OFF -DASHES_BUILD_RENDERER_OGL=ON -DASHES_BUILD_RENDERER_D3D11=ON -DASHES_BUILD_RENDERER_TEST=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
     - name: Configure CMake (Linux)
       if: runner.os == 'Linux'
@@ -125,3 +128,12 @@ jobs:
       with:
         name: Ashes-${{ matrix.os[1] }}.zip
         path: ${{ github.workspace }}/Ashes-${{ matrix.os[1] }}.zip
+        
+    - uses: microsoft/RichCodeNavIndexer@testCMakeChanges
+      if: runner.os == 'Windows'
+      with:
+        repo-token: ${{ github.token }}
+        languages: cpp
+        environment: development
+        nugetFeed: https://pkgs.dev.azure.com/jepetty/public/_packaging/GithubTest/nuget/v3/index.json
+      continue-on-error: true
